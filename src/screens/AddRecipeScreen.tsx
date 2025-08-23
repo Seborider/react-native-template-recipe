@@ -15,6 +15,7 @@ import {
   saveRecipe as saveRecipeToStorage,
   updateRecipe as updateRecipeInStorage,
 } from '../services/storage';
+import { ImagePickerComponent } from '../components/ui/ImagePicker';
 import { Button } from '../components/common/Button';
 import { FormInput } from '../components/common/FormInput';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -22,6 +23,7 @@ import {
   useRecipeForm,
   MAX_TITLE_LENGTH,
   MAX_DESCRIPTION_LENGTH,
+  MAX_IMAGES,
 } from '../hooks/useRecipeForm';
 import {
   KEYBOARD_VERTICAL_OFFSET_IOS,
@@ -113,6 +115,8 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
     setTitle,
     description,
     setDescription,
+    images,
+    setImages,
     hasChanges,
     validate,
     getRecipeData,
@@ -255,6 +259,17 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
                 nativeID="images-label">
                 Images
               </Text>
+              <View
+                style={styles.imagePickerContainer}
+                accessibilityRole="none"
+                accessibilityLabel="Recipe images section"
+                accessibilityHint={`Add up to ${MAX_IMAGES} images for your recipe`}>
+                <ImagePickerComponent
+                  images={images}
+                  onImagesChange={setImages}
+                  maxImages={MAX_IMAGES}
+                />
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -288,5 +303,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
     marginBottom: 8,
+  },
+  imagePickerContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    minHeight: 120,
+  },
+  headerButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#007AFF',
+  },
+  doneButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  disabledText: {
+    opacity: 0.5,
   },
 });
