@@ -1,16 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-
+import { Recipe } from '../types/Recipe';
+import {
+  saveRecipe as saveRecipeToStorage,
+  updateRecipe as updateRecipeInStorage,
+} from '../services/storage';
+import { Button } from '../components/common/Button';
 import { FormInput } from '../components/common/FormInput';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import {
+  useRecipeForm,
+  MAX_TITLE_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+} from '../hooks/useRecipeForm';
+import {
+  KEYBOARD_VERTICAL_OFFSET_IOS,
+  KEYBOARD_VERTICAL_OFFSET_ANDROID,
+} from '../constants';
 
 type AddRecipeScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -24,12 +40,182 @@ interface Props {
   route: AddRecipeScreenRouteProp;
 }
 
-export const AddRecipeScreen: React.FC<Props> = () => {
+interface HeaderButtonProps {
+  onPress: () => void;
+}
+
+const HeaderLeftButton = memo<HeaderButtonProps>(({ onPress }) => (
+  <Button
+    title="Cancel"
+    variant="ghost"
+    size="small"
+    onPress={onPress}
+    hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+    accessibilityLabel="Cancel recipe creation"
+    accessibilityHint="Discards changes and returns to recipe list"
+  />
+));
+
+HeaderLeftButton.displayName = 'HeaderLeftButton';
+
+interface HeaderRightButtonProps extends HeaderButtonProps {
+  saving: boolean;
+}
+
+const HeaderRightButton = memo<HeaderRightButtonProps>(
+  ({ onPress, saving }) => (
+    <Button
+      title={saving ? 'Saving...' : 'Done'}
+      variant="primary"
+      size="small"
+      onPress={onPress}
+      disabled={saving}
+      hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+      accessibilityLabel={saving ? 'Saving recipe' : 'Save recipe'}
+      accessibilityHint={
+        saving
+          ? 'Recipe is being saved'
+          : 'Saves the recipe and returns to recipe list'
+      }
+    />
+  ),
+);
+
+HeaderRightButton.displayName = 'HeaderRightButton';
+
+export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
+  const existingRecipe: Recipe | undefined = useMemo(() => {
+    const serializableRecipe = route.params?.recipe;
+    if (!serializableRecipe) {
+      return undefined;
+    }
+
+    try {
+      return {
+        ...serializableRecipe,
+        createdAt: new Date(serializableRecipe.createdAt),
+        updatedAt: new Date(serializableRecipe.updatedAt),
+      };
+    } catch (error) {
+      console.error('Error parsing recipe dates:', error);
+      return {
+        ...serializableRecipe,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    }
+  }, [route.params?.recipe]);
+
+  const isEditing = !!existingRecipe;
+
+  const {
+    title,
+    setTitle,
+    description,
+    setDescription,
+    hasChanges,
+    validate,
+    getRecipeData,
+  } = useRecipeForm(existingRecipe);
+  const [saving, setSaving] = useState(false);
+  const [saveAttempted, setSaveAttempted] = useState(false);
+
+  // Prevent double-tap on save
+  const saveRecipe = useCallback(async () => {
+    if (saving || saveAttempted) {
+      return;
+    }
+
+    const validation = validate();
+    if (!validation.isValid) {
+      Alert.alert('Validation Error', validation.errors.join('\n'));
+      return;
+    }
+
+    setSaving(true);
+    setSaveAttempted(true);
+
+    try {
+      const recipe = getRecipeData();
+
+      if (isEditing) {
+        await updateRecipeInStorage(recipe);
+      } else {
+        await saveRecipeToStorage(recipe);
+      }
+
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error saving recipe:', error);
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'There was a problem saving your recipe. Please try again.';
+
+      Alert.alert('Save Error', errorMessage);
+      setSaveAttempted(false);
+    } finally {
+      setSaving(false);
+    }
+  }, [saving, saveAttempted, validate, getRecipeData, isEditing, navigation]);
+
+  const handleCancel = useCallback(() => {
+    if (hasChanges) {
+      Alert.alert(
+        'Discard Changes?',
+        'You have unsaved changes. Are you sure you want to discard them?',
+        [
+          {
+            text: 'Keep Editing',
+            style: 'cancel',
+          },
+          {
+            text: 'Discard',
+            style: 'destructive',
+            onPress: () => {
+              navigation.goBack();
+            },
+          },
+        ],
+      );
+    } else {
+      navigation.goBack();
+    }
+  }, [hasChanges, navigation]);
+
+  // Memoize header components to prevent recreation on each render
+  const headerLeft = useMemo(
+    () => <HeaderLeftButton onPress={handleCancel} />,
+    [handleCancel],
+  );
+
+  const headerRight = useMemo(
+    () => <HeaderRightButton onPress={saveRecipe} saving={saving} />,
+    [saveRecipe, saving],
+  );
+
+  // Set up navigation header once
+  useEffect(() => {
+    navigation.setOptions({
+      title: isEditing ? 'Edit Recipe' : 'Add Recipe',
+      headerLeft: () => headerLeft,
+      headerRight: () => headerRight,
+    });
+  }, [navigation, isEditing, headerLeft, headerRight]);
+
+  const keyboardVerticalOffset = Platform.select({
+    ios: KEYBOARD_VERTICAL_OFFSET_IOS,
+    android: KEYBOARD_VERTICAL_OFFSET_ANDROID,
+    default: 0,
+  });
+
   return (
     <View style={styles.container}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={keyboardVerticalOffset}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -38,27 +224,38 @@ export const AddRecipeScreen: React.FC<Props> = () => {
           <View style={styles.form}>
             <FormInput
               label="Title"
-              value={''}
-              onChangeText={() => console.log('text')}
+              value={title}
+              onChangeText={setTitle}
               placeholder="Enter recipe title"
               required
               showRequiredFieldsHint
               autoCapitalize="words"
               returnKeyType="next"
+              maxLength={MAX_TITLE_LENGTH}
               accessibilityHint="Required field. Enter a name for your recipe"
             />
 
             <FormInput
               label="Description"
-              value={''}
-              onChangeText={() => console.log('text')}
+              value={description}
+              onChangeText={setDescription}
               placeholder="Describe your recipe..."
               multiline
               numberOfLines={4}
               autoCapitalize="sentences"
+              maxLength={MAX_DESCRIPTION_LENGTH}
               showCharacterCount
               accessibilityHint="Optional field. Provide details about your recipe"
             />
+
+            <View style={styles.inputSection}>
+              <Text
+                style={styles.label}
+                accessibilityRole="text"
+                nativeID="images-label">
+                Images
+              </Text>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -82,5 +279,14 @@ const styles = StyleSheet.create({
   },
   form: {
     padding: 16,
+  },
+  inputSection: {
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
   },
 });
