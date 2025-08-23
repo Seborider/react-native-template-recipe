@@ -25,6 +25,7 @@ import {
   MAX_DESCRIPTION_LENGTH,
   MAX_IMAGES,
 } from '../hooks/useRecipeForm';
+import { useHapticFeedback } from '../hooks/useHapticFeedback';
 import {
   KEYBOARD_VERTICAL_OFFSET_IOS,
   KEYBOARD_VERTICAL_OFFSET_ANDROID,
@@ -86,6 +87,13 @@ const HeaderRightButton = memo<HeaderRightButtonProps>(
 HeaderRightButton.displayName = 'HeaderRightButton';
 
 export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
+  const {
+    triggerImpactLight,
+    triggerImpactMedium,
+    triggerNotificationSuccess,
+    triggerNotificationError,
+  } = useHapticFeedback();
+
   const existingRecipe: Recipe | undefined = useMemo(() => {
     const serializableRecipe = route.params?.recipe;
     if (!serializableRecipe) {
@@ -138,6 +146,7 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
 
     setSaving(true);
     setSaveAttempted(true);
+    triggerImpactLight();
 
     try {
       const recipe = getRecipeData();
@@ -148,9 +157,11 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
         await saveRecipeToStorage(recipe);
       }
 
+      triggerNotificationSuccess();
       navigation.goBack();
     } catch (error) {
       console.error('Error saving recipe:', error);
+      triggerNotificationError();
 
       const errorMessage =
         error instanceof Error
@@ -162,7 +173,17 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
     } finally {
       setSaving(false);
     }
-  }, [saving, saveAttempted, validate, getRecipeData, isEditing, navigation]);
+  }, [
+    saving,
+    saveAttempted,
+    validate,
+    getRecipeData,
+    isEditing,
+    navigation,
+    triggerImpactLight,
+    triggerNotificationSuccess,
+    triggerNotificationError,
+  ]);
 
   const handleCancel = useCallback(() => {
     if (hasChanges) {
@@ -178,6 +199,7 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
             text: 'Discard',
             style: 'destructive',
             onPress: () => {
+              triggerImpactMedium();
               navigation.goBack();
             },
           },
@@ -186,7 +208,7 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
     } else {
       navigation.goBack();
     }
-  }, [hasChanges, navigation]);
+  }, [hasChanges, navigation, triggerImpactMedium]);
 
   // Memoize header components to prevent recreation on each render
   const headerLeft = useMemo(
