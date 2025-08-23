@@ -113,7 +113,6 @@ const styles = StyleSheet.create({
     color: '#999999',
     textAlign: 'right',
     marginBottom: 8,
-    // fontStyle: 'italic',
     marginTop: 4,
   },
   input: {
