@@ -18,6 +18,7 @@ import { ImageCacheManager } from '../../services/imageCache';
 import { ImageItem } from './ImageItem';
 import { AddImageButtons } from './AddImageButtons';
 import { ImageSeparator } from '../common/ImageSeparator';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import {
   IMAGE_SIZE,
   IMAGE_SPACING,
@@ -45,11 +46,14 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
   imageSize = IMAGE_SIZE,
   imageQuality = DEFAULT_IMAGE_QUALITY,
 }) => {
+  const { triggerImpactLight, triggerImpactMedium } = useHapticFeedback();
+
   const remainingSlots = useMemo(
     () => maxImages - images.length,
     [maxImages, images.length],
   );
 
+  // Preload images for better performance
   useEffect(() => {
     if (images.length > 0) {
       ImageCacheManager.preloadImages(images);
@@ -68,6 +72,7 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
     (response: ImagePickerResponse) => {
       if (response.didCancel || response.errorCode) {
         if (response.errorCode) {
+          // Handle specific error codes if needed
           const errorMessage =
             response.errorCode === 'permission'
               ? 'Permission to access photo library was denied'
@@ -85,10 +90,11 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
 
         if (newImages.length > 0) {
           onImagesChange([...images, ...newImages]);
+          triggerImpactMedium();
         }
       }
     },
-    [images, onImagesChange, remainingSlots],
+    [images, onImagesChange, remainingSlots, triggerImpactMedium],
   );
 
   const addImage = useCallback(() => {
@@ -96,6 +102,8 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
       showMaxImagesAlert();
       return;
     }
+
+    triggerImpactLight();
 
     const options: ImageLibraryOptions = {
       mediaType: 'photo' as MediaType,
@@ -111,6 +119,7 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
     imageQuality,
     handleImagePickerResponse,
     showMaxImagesAlert,
+    triggerImpactLight,
   ]);
 
   const removeImage = useCallback(
@@ -127,8 +136,18 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
       return;
     }
 
+    triggerImpactLight();
+
     onImagesChange([...images]);
-  }, [images, onImagesChange, remainingSlots, showMaxImagesAlert]);
+    triggerImpactMedium();
+  }, [
+    images,
+    onImagesChange,
+    remainingSlots,
+    showMaxImagesAlert,
+    triggerImpactLight,
+    triggerImpactMedium,
+  ]);
 
   // Optimized render functions
   const renderImage = useCallback<ListRenderItem<string>>(
