@@ -166,3 +166,21 @@ export const clearAllRecipes = async (): Promise<void> => {
     cache = { data: null, timestamp: 0 };
   });
 };
+
+// Utility functions
+export const getRecipeById = async (id: string): Promise<Recipe | null> => {
+  const recipes = await getRecipes();
+  return recipes.find(r => r.id === id) || null;
+};
+
+export const searchRecipes = async (
+  predicate: (recipe: Recipe) => boolean,
+): Promise<Recipe[]> => {
+  const recipes = await getRecipes();
+  return recipes.filter(predicate);
+};
+
+// Utility to invalidate cache (useful for testing or forced refresh)
+export const invalidateCache = () => {
+  cache = { data: null, timestamp: 0 };
+};
