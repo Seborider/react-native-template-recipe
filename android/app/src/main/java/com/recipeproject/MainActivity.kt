@@ -23,6 +23,8 @@ class MainActivity : ReactActivity() {
 
   // React Native Navigation / react-native-screens
   override fun onCreate(savedInstanceState: Bundle?) {
+    // Switch from splash theme to app theme
+    setTheme(R.style.AppTheme)
     super.onCreate(null)
   }
 }
