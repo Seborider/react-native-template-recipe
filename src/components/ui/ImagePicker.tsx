@@ -15,6 +15,7 @@ import {
   ImageLibraryOptions,
 } from 'react-native-image-picker';
 import { ImageCacheManager } from '../../services/imageCache';
+import { PicsumUtils } from '../../utils/picsumUtils';
 import { ImageItem } from './ImageItem';
 import { AddImageButtons } from './AddImageButtons';
 import { ImageSeparator } from '../common/ImageSeparator';
@@ -138,7 +139,15 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
 
     triggerImpactLight();
 
-    onImagesChange([...images]);
+    // Generate consistent seeded random image URL
+    const randomImageUrl = PicsumUtils.generateSeededUrl({
+      width: 400,
+      height: 400,
+      // Generate unique seed for each new image
+      seed: `recipe-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+    });
+
+    onImagesChange([...images, randomImageUrl]);
     triggerImpactMedium();
   }, [
     images,
