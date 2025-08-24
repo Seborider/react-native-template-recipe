@@ -147,40 +147,7 @@ export const deleteRecipe = async (recipeId: string): Promise<void> => {
   });
 };
 
-export const deleteRecipes = async (recipeIds: string[]): Promise<void> => {
-  if (!recipeIds.length) {
-    return;
-  }
-
-  return withMutex(async () => {
-    const recipes = await readFromStorage();
-    const idsToDelete = new Set(recipeIds);
-    const filtered = recipes.filter(r => !idsToDelete.has(r.id));
-    await writeToStorage(filtered);
-  });
-};
-
-export const clearAllRecipes = async (): Promise<void> => {
-  return withMutex(async () => {
-    await AsyncStorage.removeItem(RECIPES_STORAGE_KEY);
-    cache = { data: null, timestamp: 0 };
-  });
-};
-
-// Utility functions
-export const getRecipeById = async (id: string): Promise<Recipe | null> => {
-  const recipes = await getRecipes();
-  return recipes.find(r => r.id === id) || null;
-};
-
-export const searchRecipes = async (
-  predicate: (recipe: Recipe) => boolean,
-): Promise<Recipe[]> => {
-  const recipes = await getRecipes();
-  return recipes.filter(predicate);
-};
-
-// Utility to invalidate cache (useful for testing or forced refresh)
+// Utility to invalidate cache (useful for testing)
 export const invalidateCache = () => {
   cache = { data: null, timestamp: 0 };
 };

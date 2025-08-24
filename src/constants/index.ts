@@ -6,6 +6,9 @@ export const IMAGE_SPACING = 12;
 /** Default spacing for general UI elements */
 export const DEFAULT_SPACING = 8;
 
+/** Snap interval for horizontal image scrolling */
+export const SNAP_INTERVAL = IMAGE_SIZE + DEFAULT_SPACING;
+
 /** Maximum allowed characters for recipe title */
 export const MAX_TITLE_LENGTH = 100;
 
@@ -36,11 +39,14 @@ export const NAVIGATION_STATE_KEY = '@recipe_app_nav_state';
 /** Default image size for Picsum placeholder images */
 export const DEFAULT_IMAGE_SIZE = 400;
 
+/** Default Picsum url*/
+export const PICSUM_BASE_URL = 'https://picsum.photos';
+
 /** Cache timeout for storage operations (5 minutes) */
 export const CACHE_TIMEOUT = 5 * 60 * 1000;
 
-/** Cache TTL for image validation (5 minutes) */
-export const VALIDATION_CACHE_TTL = 5 * 60 * 1000;
+/** Cache duration for image validation (5 minutes) */
+export const VALIDATION_CACHE_DURATION = 5 * 60 * 1000;
 
 /** Timeout for image loading requests (3 seconds) */
 export const IMAGE_LOAD_TIMEOUT = 3000;
