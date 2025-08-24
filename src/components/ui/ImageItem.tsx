@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, memo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useCallback, useMemo, memo, useState } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { Button } from '../common/Button';
 import {
@@ -13,17 +13,34 @@ interface ImageItemProps {
   uri: string;
   index: number;
   totalImages: number;
-  onRemove: (index: number) => void;
+  onRemove?: (index: number) => void;
+  showDeleteButton?: boolean;
+  showErrorFallback?: boolean;
 }
 
 const ImageItem = memo<ImageItemProps>(
-  ({ uri, index, totalImages, onRemove }) => {
+  ({
+    uri,
+    index,
+    totalImages,
+    onRemove,
+    showDeleteButton = true,
+    showErrorFallback = false,
+  }) => {
     const { triggerImpactLight } = useHapticFeedback();
+    const [hasError, setHasError] = useState(false);
 
     const handleRemove = useCallback(() => {
-      triggerImpactLight();
-      onRemove(index);
+      if (onRemove) {
+        triggerImpactLight();
+        onRemove(index);
+      }
     }, [index, onRemove, triggerImpactLight]);
+
+    const handleImageError = useCallback(() => {
+      console.warn(`Failed to load image ${index + 1}:`, uri);
+      setHasError(true);
+    }, [index, uri]);
 
     const imageConfig = useMemo(() => getImageConfigForUri(uri), [uri]);
     const imageSource = useMemo(
@@ -32,8 +49,23 @@ const ImageItem = memo<ImageItemProps>(
     );
 
     if (!imageSource) {
+      if (showErrorFallback) {
+        return (
+          <View style={[styles.imageWrapper, styles.imagePlaceholder]}>
+            <Text style={styles.imagePlaceholderText}>📷</Text>
+          </View>
+        );
+      }
       console.warn(`Skipping invalid image URI at index ${index}:`, uri);
       return null;
+    }
+
+    if (hasError && showErrorFallback) {
+      return (
+        <View style={[styles.imageWrapper, styles.imagePlaceholder]}>
+          <Text style={styles.imagePlaceholderText}>📷</Text>
+        </View>
+      );
     }
 
     return (
@@ -45,24 +77,24 @@ const ImageItem = memo<ImageItemProps>(
           source={imageSource}
           style={styles.image}
           accessibilityRole="image"
-          accessibilityLabel={`Recipe image ${index + 1}`}
+          accessibilityLabel={`Recipe image ${index + 1} of ${totalImages}`}
           accessibilityIgnoresInvertColors={true}
           resizeMode={imageConfig.resizeMode}
-          onError={() => {
-            console.warn(`FastImage failed to load image ${index + 1}:`, uri);
-          }}
+          onError={showErrorFallback ? handleImageError : undefined}
         />
-        <Button
-          icon="×"
-          variant="danger"
-          size="small"
-          onPress={handleRemove}
-          style={styles.deleteButton}
-          textStyle={styles.deleteIconStyle}
-          hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-          accessibilityLabel={`Remove image ${index + 1}`}
-          accessibilityHint="Tap to remove this image from the recipe"
-        />
+        {showDeleteButton && onRemove && (
+          <Button
+            icon="×"
+            variant="danger"
+            size="small"
+            onPress={handleRemove}
+            style={styles.deleteButton}
+            textStyle={styles.deleteIconStyle}
+            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+            accessibilityLabel={`Remove image ${index + 1}`}
+            accessibilityHint="Tap to remove this image from the recipe"
+          />
+        )}
       </View>
     );
   },
@@ -79,6 +111,18 @@ const styles = StyleSheet.create({
     height: IMAGE_SIZE,
     borderRadius: 8,
     backgroundColor: '#F0F0F0',
+  },
+  imagePlaceholder: {
+    width: IMAGE_SIZE,
+    height: IMAGE_SIZE,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  imagePlaceholderText: {
+    fontSize: 24,
+    opacity: 0.5,
   },
   deleteButton: {
     position: 'absolute',
