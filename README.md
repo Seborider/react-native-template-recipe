@@ -1,4 +1,25 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`,@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Recipe Management App
+
+A React Native 0.75.4 recipe management app built with TypeScript. This app allows users to create, view, and manage their favorite recipes with image support and an intuitive swipe-to-delete interface.
+
+![App Screenshots](assets/Screens.png)
+
+## Features
+
+- **Recipe Management**: Create, edit, and delete recipes with titles, descriptions, and multiple images
+- **Image Support**: Add images from camera, gallery, or generated placeholders with caching optimization
+- **Gesture Controls**: Swipe-to-delete functionality with haptic feedback
+- **Theme Support**: Automatic light and dark mode support that follows device system settings
+- **Data Persistence**: Local storage with AsyncStorage and in-memory caching
+- **Performance Optimized**: FastImage integration and React.memo optimizations throughout
+
+## Architecture
+
+- **Navigation**: React Navigation v6 with native stack navigator
+- **State Management**: Local AsyncStorage with mutex-based concurrency control
+- **Image Handling**: FastImage with custom caching layer and Picsum placeholder generation
+- **UI Components**: Gesture-based interactions with Reanimated v3
+- **Form Management**: Custom hook-based form validation with change detection
 
 # Getting Started
 
