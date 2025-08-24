@@ -8,31 +8,21 @@ import {
   FlatList,
   ListRenderItem,
 } from 'react-native';
-import FastImage from 'react-native-fast-image';
 import ReanimatedSwipeable, {
   SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
-import Reanimated, {
-  interpolate,
-  SharedValue,
-  useAnimatedStyle,
-} from 'react-native-reanimated';
+import { SharedValue } from 'react-native-reanimated';
 import { Recipe } from '../../types/Recipe';
-import { Button } from '../common/Button';
 import { ImageSeparator } from '../common/ImageSeparator';
-import {
-  createImageSource,
-  getImageConfigForUri,
-} from '../../services/imageCache';
+import { ImageItem } from './ImageItem';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import {
   IMAGE_SIZE,
-  DEFAULT_SPACING,
   SWIPE_THRESHOLD,
   SWIPE_FRICTION,
+  SNAP_INTERVAL,
 } from '../../constants';
-
-const SNAP_INTERVAL = IMAGE_SIZE + DEFAULT_SPACING;
+import { AnimatedDeleteButton } from './AnimatedDeleteButton';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -40,91 +30,7 @@ interface RecipeCardProps {
   onDelete: (recipe: Recipe) => void;
 }
 
-interface AnimatedDeleteButtonProps {
-  progress: SharedValue<number>;
-  onPress: () => void;
-}
-
-interface RecipeImageProps {
-  uri: string;
-  index: number;
-  total: number;
-}
-
 // Memoized Components
-const AnimatedDeleteButton = memo<AnimatedDeleteButtonProps>(
-  ({ progress, onPress }) => {
-    const animatedStyle = useAnimatedStyle(() => {
-      const scale = interpolate(progress.value, [0, 0.6], [0, 1], 'clamp');
-      const opacity = interpolate(
-        progress.value,
-        [0, 0.3, 0.7],
-        [0, 0.8, 1],
-        'clamp',
-      );
-
-      return {
-        transform: [{ scale }],
-        opacity,
-      };
-    });
-
-    return (
-      <Reanimated.View style={[styles.deleteButton, animatedStyle]}>
-        <Button
-          icon="🗑️"
-          title="Delete"
-          variant="delete"
-          size="small"
-          onPress={onPress}
-          style={styles.deleteButtonTouch}
-          accessibilityLabel="Delete recipe"
-          accessibilityHint="Double tap to confirm deletion"
-        />
-      </Reanimated.View>
-    );
-  },
-);
-AnimatedDeleteButton.displayName = 'AnimatedDeleteButton';
-
-const RecipeImage = memo<RecipeImageProps>(({ uri, index, total }) => {
-  const [hasError, setHasError] = useState(false);
-
-  const handleImageError = useCallback(() => {
-    console.warn(`Failed to load image ${index + 1}:`, uri);
-    setHasError(true);
-  }, [index, uri]);
-
-  const imageConfig = useMemo(() => getImageConfigForUri(uri), [uri]);
-  const imageSource = useMemo(
-    () => createImageSource(uri, imageConfig),
-    [uri, imageConfig],
-  );
-
-  if (hasError || !imageSource) {
-    return (
-      <View style={[styles.imageContainer, styles.imagePlaceholder]}>
-        <Text style={styles.imagePlaceholderText}>📷</Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.imageContainer}>
-      <FastImage
-        source={imageSource}
-        style={styles.image}
-        onError={handleImageError}
-        accessibilityRole="image"
-        accessibilityLabel={`Recipe image ${index + 1} of ${total}`}
-        accessibilityIgnoresInvertColors={true}
-        resizeMode={imageConfig.resizeMode}
-      />
-    </View>
-  );
-});
-RecipeImage.displayName = 'RecipeImage';
-
 const EmptyImages = memo(() => (
   <View
     style={styles.emptyImagesContainer}
@@ -192,13 +98,19 @@ export const RecipeCard = memo<RecipeCardProps>(
 
     const renderImage: ListRenderItem<string> = useCallback(
       ({ item, index }) => (
-        <RecipeImage uri={item} index={index} total={recipe.images.length} />
+        <ImageItem
+          uri={item}
+          index={index}
+          totalImages={recipe.images.length}
+          showDeleteButton={false}
+          showErrorFallback={true}
+        />
       ),
       [recipe.images.length],
     );
 
     const keyExtractor = useCallback(
-      (item: string, index: number) => `${recipe.id}-image-${index}`,
+      (_item: string, index: number) => `${recipe.id}-image-${index}`,
       [recipe.id],
     );
 
@@ -352,26 +264,6 @@ const styles = StyleSheet.create({
   imagesList: {
     paddingVertical: 4,
   },
-  imageContainer: {
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  image: {
-    width: IMAGE_SIZE,
-    height: IMAGE_SIZE,
-    backgroundColor: '#F0F0F0',
-  },
-  imagePlaceholder: {
-    width: IMAGE_SIZE,
-    height: IMAGE_SIZE,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imagePlaceholderText: {
-    fontSize: 24,
-    opacity: 0.5,
-  },
   emptyImagesContainer: {
     height: IMAGE_SIZE,
     justifyContent: 'center',
@@ -391,36 +283,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 80,
     marginVertical: 8,
-  },
-  deleteButton: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 70,
-    height: '100%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  deleteButtonTouch: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-  },
-  deleteButtonText: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  deleteButtonLabel: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
   },
 });
