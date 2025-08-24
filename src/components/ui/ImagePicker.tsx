@@ -36,9 +36,7 @@ interface ImagePickerProps {
   imageQuality?: PhotoQuality;
 }
 
-const ImageSeparatorWithSpacing = () => (
-  <ImageSeparator spacing={IMAGE_SPACING} />
-);
+const ItemSeparator = () => <ImageSeparator spacing={IMAGE_SPACING} />;
 
 export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
   images,
@@ -60,14 +58,6 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
       ImageCacheManager.preloadImages(images);
     }
   }, [images]);
-
-  const showMaxImagesAlert = useCallback(() => {
-    Alert.alert(
-      'Maximum Images',
-      `You can only add up to ${maxImages} images.`,
-      [{ text: 'OK', style: 'default' }],
-    );
-  }, [maxImages]);
 
   const handleImagePickerResponse = useCallback(
     (response: ImagePickerResponse) => {
@@ -99,11 +89,6 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
   );
 
   const addImage = useCallback(() => {
-    if (remainingSlots === 0) {
-      showMaxImagesAlert();
-      return;
-    }
-
     triggerImpactLight();
 
     const options: ImageLibraryOptions = {
@@ -116,10 +101,9 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
 
     launchImageLibrary(options, handleImagePickerResponse);
   }, [
-    remainingSlots,
     imageQuality,
+    remainingSlots,
     handleImagePickerResponse,
-    showMaxImagesAlert,
     triggerImpactLight,
   ]);
 
@@ -132,31 +116,17 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
   );
 
   const generateRandomImage = useCallback(() => {
-    if (remainingSlots === 0) {
-      showMaxImagesAlert();
-      return;
-    }
-
     triggerImpactLight();
 
-    // Generate consistent seeded random image URL
     const randomImageUrl = PicsumUtils.generateSeededUrl({
       width: 400,
       height: 400,
-      // Generate unique seed for each new image
       seed: `recipe-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
     });
 
     onImagesChange([...images, randomImageUrl]);
     triggerImpactMedium();
-  }, [
-    images,
-    onImagesChange,
-    remainingSlots,
-    showMaxImagesAlert,
-    triggerImpactLight,
-    triggerImpactMedium,
-  ]);
+  }, [images, onImagesChange, triggerImpactLight, triggerImpactMedium]);
 
   // Optimized render functions
   const renderImage = useCallback<ListRenderItem<string>>(
@@ -211,18 +181,21 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
     [addImage, generateRandomImage, remainingSlots],
   );
 
+  const accessibilityLabel = useMemo(() => {
+    return images.length > 0
+      ? `Image picker with ${images.length} of ${maxImages} images selected`
+      : 'No images added yet';
+  }, [images.length, maxImages]);
+
   return (
-    <View
-      style={styles.container}
-      accessibilityRole="list"
-      accessibilityLabel={`Image picker with ${images.length} of ${maxImages} images selected`}>
+    <View style={styles.container}>
       <FlatList
         data={images}
         renderItem={renderImage}
         keyExtractor={keyExtractor}
         horizontal
         showsHorizontalScrollIndicator={false}
-        ItemSeparatorComponent={ImageSeparatorWithSpacing}
+        ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
         contentContainerStyle={styles.flatListContent}
@@ -232,11 +205,7 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
         windowSize={10}
         initialNumToRender={5}
         accessibilityRole="list"
-        accessibilityLabel={
-          images.length > 0
-            ? `${images.length} recipe images`
-            : 'No images added yet'
-        }
+        accessibilityLabel={accessibilityLabel}
       />
     </View>
   );
@@ -248,9 +217,6 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     paddingVertical: 8,
-  },
-  disabledText: {
-    color: '#C7C7CC',
   },
 });
 

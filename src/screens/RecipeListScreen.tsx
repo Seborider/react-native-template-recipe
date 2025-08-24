@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, FlatList, Text, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -7,6 +7,7 @@ import { getRecipes, deleteRecipe } from '../services/storage';
 import { RecipeCard } from '../components/ui/RecipeCard';
 import { Button } from '../components/common/Button';
 import { useHapticFeedback } from '../hooks/useHapticFeedback';
+import { useThemeColors } from '../hooks/useThemeColors';
 import {
   RootStackParamList,
   SerializableRecipe,
@@ -21,18 +22,6 @@ interface Props {
   navigation: RecipeListScreenNavigationProp;
 }
 
-const HeaderRightButton: React.FC<{ onPress: () => void }> = ({ onPress }) => (
-  <Button
-    title="+"
-    variant="primary"
-    size="small"
-    onPress={onPress}
-    hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-    accessibilityLabel="Add new recipe"
-    accessibilityHint="Opens form to create a new recipe"
-  />
-);
-
 export const RecipeListScreen: React.FC<Props> = ({ navigation }) => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +31,9 @@ export const RecipeListScreen: React.FC<Props> = ({ navigation }) => {
     triggerNotificationSuccess,
     triggerNotificationError,
   } = useHapticFeedback();
+
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const loadRecipes = async () => {
     try {
@@ -65,14 +57,28 @@ export const RecipeListScreen: React.FC<Props> = ({ navigation }) => {
   }, [navigation, triggerImpactMedium]);
 
   const headerRight = useCallback(
-    () => <HeaderRightButton onPress={navigateToAddRecipe} />,
+    () => (
+      <Button
+        title="+"
+        variant="primary"
+        size="small"
+        onPress={navigateToAddRecipe}
+        hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+        accessibilityLabel="Add new recipe"
+        accessibilityHint="Opens form to create a new recipe"
+      />
+    ),
     [navigateToAddRecipe],
   );
+
+  useEffect(() => {
+    navigation.setOptions({ headerRight });
+  }, [navigation, headerRight]);
 
   const handleRecipePress = (recipe: Recipe) => {
     triggerImpactLight();
     // In the future, this could navigate to a recipe detail screen
-    // For now, it could navigate to edit mode
+    // For now, it navigates to edit mode
 
     // Convert Recipe to SerializableRecipe for navigation
     const serializableRecipe: SerializableRecipe = {
@@ -106,13 +112,6 @@ export const RecipeListScreen: React.FC<Props> = ({ navigation }) => {
       loadRecipes();
     }, []),
   );
-
-  useEffect(() => {
-    // Set up the header right button
-    navigation.setOptions({
-      headerRight,
-    });
-  }, [navigation, headerRight]);
 
   const renderRecipe = ({ item }: { item: Recipe }) => (
     <RecipeCard
@@ -178,47 +177,48 @@ export const RecipeListScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
-  },
-  listContent: {
-    paddingVertical: 16,
-  },
-  emptyListContent: {
-    flexGrow: 1,
-  },
-  separator: {
-    height: 8,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#666666',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 22,
-  },
-});
+const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.secondary,
+    },
+    listContent: {
+      paddingVertical: 16,
+    },
+    emptyListContent: {
+      flexGrow: 1,
+    },
+    separator: {
+      height: 8,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      fontSize: 16,
+      color: colors.darkGray,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 32,
+    },
+    emptyTitle: {
+      fontSize: 24,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    emptySubtitle: {
+      fontSize: 16,
+      color: colors.darkGray,
+      textAlign: 'center',
+      marginBottom: 32,
+      lineHeight: 22,
+    },
+  });

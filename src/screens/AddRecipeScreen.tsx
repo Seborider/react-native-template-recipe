@@ -26,6 +26,7 @@ import {
   MAX_IMAGES,
 } from '../hooks/useRecipeForm';
 import { useHapticFeedback } from '../hooks/useHapticFeedback';
+import { useThemeColors } from '../hooks/useThemeColors';
 import {
   KEYBOARD_VERTICAL_OFFSET_IOS,
   KEYBOARD_VERTICAL_OFFSET_ANDROID,
@@ -94,6 +95,8 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
     triggerNotificationError,
   } = useHapticFeedback();
 
+  const colors = useThemeColors();
+
   const existingRecipe: Recipe | undefined = useMemo(() => {
     const serializableRecipe = route.params?.recipe;
     if (!serializableRecipe) {
@@ -130,11 +133,9 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
     getRecipeData,
   } = useRecipeForm(existingRecipe);
   const [saving, setSaving] = useState(false);
-  const [saveAttempted, setSaveAttempted] = useState(false);
 
-  // Prevent double-tap on save
   const saveRecipe = useCallback(async () => {
-    if (saving || saveAttempted) {
+    if (saving) {
       return;
     }
 
@@ -145,7 +146,6 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
     }
 
     setSaving(true);
-    setSaveAttempted(true);
     triggerImpactLight();
 
     try {
@@ -169,13 +169,11 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
           : 'There was a problem saving your recipe. Please try again.';
 
       Alert.alert('Save Error', errorMessage);
-      setSaveAttempted(false);
     } finally {
       setSaving(false);
     }
   }, [
     saving,
-    saveAttempted,
     validate,
     getRecipeData,
     isEditing,
@@ -221,7 +219,7 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
     [saveRecipe, saving],
   );
 
-  // Set up navigation header once
+  // Set up navigation header
   useEffect(() => {
     navigation.setOptions({
       title: isEditing ? 'Edit Recipe' : 'Add Recipe',
@@ -230,11 +228,12 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
     });
   }, [navigation, isEditing, headerLeft, headerRight]);
 
-  const keyboardVerticalOffset = Platform.select({
-    ios: KEYBOARD_VERTICAL_OFFSET_IOS,
-    android: KEYBOARD_VERTICAL_OFFSET_ANDROID,
-    default: 0,
-  });
+  const keyboardVerticalOffset =
+    Platform.OS === 'ios'
+      ? KEYBOARD_VERTICAL_OFFSET_IOS
+      : KEYBOARD_VERTICAL_OFFSET_ANDROID;
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={styles.container}>
@@ -275,15 +274,11 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
             />
 
             <View style={styles.inputSection}>
-              <Text
-                style={styles.label}
-                accessibilityRole="text"
-                nativeID="images-label">
+              <Text style={styles.label} nativeID="images-label">
                 Images
               </Text>
               <View
                 style={styles.imagePickerContainer}
-                accessibilityRole="none"
                 accessibilityLabel="Recipe images section"
                 accessibilityHint={`Add up to ${MAX_IMAGES} images for your recipe`}>
                 <ImagePickerComponent
@@ -300,57 +295,39 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 50,
-  },
-  form: {
-    padding: 16,
-  },
-  inputSection: {
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  imagePickerContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    minHeight: 120,
-  },
-  headerButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
-  },
-  doneButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  disabledText: {
-    opacity: 0.5,
-  },
-});
+const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.secondary,
+    },
+    keyboardAvoidingView: {
+      flex: 1,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingBottom: 50,
+    },
+    form: {
+      padding: 16,
+    },
+    inputSection: {
+      marginBottom: 24,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    imagePickerContainer: {
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      minHeight: 120,
+    },
+  });

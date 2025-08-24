@@ -8,17 +8,12 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 interface FormInputProps extends Omit<TextInputProps, 'style'> {
   label: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
   required?: boolean;
   showCharacterCount?: boolean;
-  maxLength?: number;
-  multiline?: boolean;
-  numberOfLines?: number;
   accessibilityHint?: string;
   error?: string;
   containerStyle?: ViewStyle;
@@ -44,50 +39,58 @@ export const FormInput = memo<FormInputProps>(
     showRequiredFieldsHint = false,
     ...textInputProps
   }) => {
+    const colors = useThemeColors();
+
     const labelId = `${label.toLowerCase().replace(/\s+/g, '-')}-label`;
     const displayLabel = required ? `${label} *` : label;
 
     return (
       <View style={[styles.container, containerStyle]}>
-        <Text style={styles.label} accessibilityRole="text" nativeID={labelId}>
+        <Text style={[styles.label, { color: colors.text }]} nativeID={labelId}>
           {displayLabel}
         </Text>
 
         <TextInput
           style={[
             styles.input,
+            {
+              backgroundColor: colors.inputBackground,
+              color: colors.text,
+              borderColor: colors.inputBorder,
+            },
             multiline && styles.multilineInput,
-            error && styles.inputError,
+            error && { borderColor: colors.error },
             inputStyle,
           ]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#999999"
+          placeholderTextColor={colors.placeholder}
           multiline={multiline}
           numberOfLines={numberOfLines}
           textAlignVertical={multiline ? 'top' : 'center'}
           maxLength={maxLength}
-          accessibilityLabel={label}
           accessibilityHint={accessibilityHint}
           accessibilityLabelledBy={labelId}
           {...textInputProps}
         />
+
         {showRequiredFieldsHint && required && (
-          <Text style={styles.requiredHint} accessibilityRole="text">
+          <Text style={[styles.requiredHint, { color: colors.placeholder }]}>
             * indicates field is required
           </Text>
         )}
-        {showCharacterCount && maxLength && (
+
+        {showCharacterCount && maxLength && value && (
           <Text
-            style={styles.characterCount}
-            accessibilityLabel={`${value.length} of ${maxLength} characters used`}
-            accessibilityRole="text">
+            style={[styles.characterCount, { color: colors.placeholder }]}
+            accessibilityLabel={`${value.length} of ${maxLength} characters used`}>
             {value.length}/{maxLength}
           </Text>
         )}
+
         {error && (
-          <Text style={styles.errorText} accessibilityRole="text">
+          <Text style={[styles.errorText, { color: colors.error }]}>
             {error}
           </Text>
         )}
@@ -105,42 +108,32 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 8,
   },
   requiredHint: {
     fontSize: 12,
-    color: '#999999',
     textAlign: 'right',
     marginBottom: 8,
     marginTop: 4,
   },
   input: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 16,
     fontSize: 16,
-    color: '#000000',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     minHeight: 52,
   },
   multilineInput: {
     minHeight: 100,
     maxHeight: 200,
   },
-  inputError: {
-    borderColor: '#FF3B30',
-  },
   characterCount: {
     fontSize: 12,
-    color: '#999999',
     textAlign: 'right',
     marginTop: 4,
   },
   errorText: {
     fontSize: 12,
-    color: '#FF3B30',
     marginTop: 4,
   },
 });

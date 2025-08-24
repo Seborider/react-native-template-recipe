@@ -63,32 +63,8 @@ export const MIN_BLUR = 1;
 /** Maximum blur value for Picsum images */
 export const MAX_BLUR = 10;
 
-export const COLORS = {
-  light: {
-    primary: '#007AFF',
-    background: '#FFFFFF',
-    card: '#FFFFFF',
-    text: '#000000',
-    border: '#E5E5EA',
-    notification: '#FF3B30',
-    secondary: '#F2F2F7',
-    success: '#34C759',
-    warning: '#FF9500',
-    danger: '#FF3B30',
-  },
-  dark: {
-    primary: '#0A84FF',
-    background: '#000000',
-    card: '#1C1C1E',
-    text: '#FFFFFF',
-    border: '#38383A',
-    notification: '#FF453A',
-    secondary: '#1C1C1E',
-    success: '#30D158',
-    warning: '#FF9F0A',
-    danger: '#FF453A',
-  },
-} as const;
+// Re-export colors from separate colors module
+export { COLORS } from './colors';
 
 export const HAPTIC_OPTIONS = {
   enableVibrateFallback: true,

@@ -16,6 +16,7 @@ import { Recipe } from '../../types/Recipe';
 import { ImageSeparator } from '../common/ImageSeparator';
 import { ImageItem } from './ImageItem';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import {
   IMAGE_SIZE,
   SWIPE_THRESHOLD,
@@ -30,18 +31,28 @@ interface RecipeCardProps {
   onDelete: (recipe: Recipe) => void;
 }
 
-// Memoized Components
-const EmptyImages = memo(() => (
-  <View
-    style={styles.emptyImagesContainer}
-    accessibilityRole="text"
-    accessibilityLabel="No images added to this recipe">
-    <Text style={styles.emptyImagesText}>No images</Text>
-  </View>
-));
+const EmptyImages = memo(() => {
+  const colors = useThemeColors();
+
+  return (
+    <View
+      style={[
+        styles.emptyImagesContainer,
+        {
+          backgroundColor: colors.backgroundGray,
+          borderColor: colors.borderGray,
+        },
+      ]}
+      accessibilityRole="text"
+      accessibilityLabel="No images added to this recipe">
+      <Text style={[styles.emptyImagesText, { color: colors.placeholderGray }]}>
+        No images
+      </Text>
+    </View>
+  );
+});
 EmptyImages.displayName = 'EmptyImages';
 
-// Utility functions
 const showDeleteConfirmation = (
   recipe: Recipe,
   onConfirm: () => void,
@@ -69,8 +80,14 @@ export const RecipeCard = memo<RecipeCardProps>(
   ({ recipe, onPress, onDelete }) => {
     const swipeableRef = useRef<SwipeableMethods>(null);
     const [isScrolling, setIsScrolling] = useState(false);
+    const colors = useThemeColors();
     const { triggerImpactMedium, triggerNotificationWarning } =
       useHapticFeedback();
+
+    const truncatedDescription = useMemo(
+      () => recipe.description?.substring(0, 100) ?? 'No description',
+      [recipe.description],
+    );
 
     const handleDelete = useCallback(() => {
       triggerImpactMedium();
@@ -114,17 +131,8 @@ export const RecipeCard = memo<RecipeCardProps>(
       [recipe.id],
     );
 
-    const handleScrollBegin = useCallback(() => {
-      setIsScrolling(true);
-    }, []);
-
-    const handleScrollEnd = useCallback(() => {
-      setIsScrolling(false);
-    }, []);
-
-    const handleCardPress = useCallback(() => {
-      onPress?.();
-    }, [onPress]);
+    const setScrollingTrue = useCallback(() => setIsScrolling(true), []);
+    const setScrollingFalse = useCallback(() => setIsScrolling(false), []);
 
     const flatListProps = useMemo(
       () => ({
@@ -138,9 +146,9 @@ export const RecipeCard = memo<RecipeCardProps>(
         decelerationRate: 'fast' as const,
         snapToInterval: SNAP_INTERVAL,
         snapToAlignment: 'start' as const,
-        onScrollBeginDrag: handleScrollBegin,
-        onScrollEndDrag: handleScrollEnd,
-        onMomentumScrollEnd: handleScrollEnd,
+        onScrollBeginDrag: setScrollingTrue,
+        onScrollEndDrag: setScrollingFalse,
+        onMomentumScrollEnd: setScrollingFalse,
         removeClippedSubviews: true,
         maxToRenderPerBatch: 5,
         windowSize: 10,
@@ -154,20 +162,9 @@ export const RecipeCard = memo<RecipeCardProps>(
         recipe.images,
         renderImage,
         keyExtractor,
-        handleScrollBegin,
-        handleScrollEnd,
+        setScrollingTrue,
+        setScrollingFalse,
       ],
-    );
-
-    const accessibilityValue = useMemo(
-      () => ({
-        text: `${recipe.title}. ${
-          recipe.description
-            ? recipe.description.substring(0, 100)
-            : 'No description'
-        }. Swipe right to delete.`,
-      }),
-      [recipe.title, recipe.description],
     );
 
     return (
@@ -178,30 +175,33 @@ export const RecipeCard = memo<RecipeCardProps>(
         friction={SWIPE_FRICTION}
         enabled={!isScrolling}>
         <View
-          style={styles.card}
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.card,
+              shadowColor: colors.shadowColor,
+              borderColor: colors.border,
+              borderWidth: StyleSheet.hairlineWidth,
+            },
+          ]}
           accessibilityRole="text"
-          accessibilityLabel={`Recipe card for ${recipe.title}`}
-          accessibilityValue={accessibilityValue}>
+          accessibilityLabel={`Recipe card for ${recipe.title}`}>
           <View style={styles.cardContent}>
             <TouchableOpacity
               style={styles.textContainer}
-              onPress={handleCardPress}
+              onPress={onPress}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={`Recipe: ${recipe.title}`}
-              accessibilityHint={`Tap to edit recipe. ${
-                recipe.description
-                  ? recipe.description.substring(0, 100)
-                  : 'No description'
-              }`}>
+              accessibilityHint={`Tap to edit recipe. ${truncatedDescription}`}>
               <Text
-                style={styles.title}
+                style={[styles.title, { color: colors.text }]}
                 numberOfLines={2}
                 accessibilityRole="header">
                 {recipe.title}
               </Text>
               <Text
-                style={styles.description}
+                style={[styles.description, { color: colors.darkGray }]}
                 numberOfLines={3}
                 accessibilityRole="text">
                 {recipe.description || 'No description provided'}
@@ -226,11 +226,9 @@ RecipeCard.displayName = 'RecipeCard';
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginVertical: 8,
     borderRadius: 12,
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -249,12 +247,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 8,
   },
   description: {
     fontSize: 14,
-    color: '#666666',
     lineHeight: 20,
     marginBottom: 0,
   },
@@ -268,15 +264,12 @@ const styles = StyleSheet.create({
     height: IMAGE_SIZE,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderStyle: 'dashed',
   },
   emptyImagesText: {
     fontSize: 14,
-    color: '#999999',
   },
   rightActionContainer: {
     alignItems: 'center',

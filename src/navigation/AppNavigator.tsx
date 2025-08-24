@@ -2,7 +2,6 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   NavigationContainer,
   DefaultTheme,
-  Theme,
   InitialState,
 } from '@react-navigation/native';
 import {
@@ -33,23 +32,24 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const createScreenOptions = (
-  colors: typeof COLORS.light | typeof COLORS.dark,
-): NativeStackNavigationOptions => ({
-  headerStyle: {
-    backgroundColor: colors.card,
-  },
-  headerTintColor: colors.primary,
-  headerTitleStyle: {
-    fontWeight: '600',
-  },
-  headerTitleAlign: 'center',
-  headerBackTitleVisible: false,
-  headerLargeTitle: false,
-  headerTransparent: false,
-});
+const getScreenOptions = (isDark: boolean): NativeStackNavigationOptions => {
+  const colors = isDark ? COLORS.dark : COLORS.light;
+  return {
+    headerStyle: {
+      backgroundColor: colors.card,
+    },
+    headerTintColor: colors.primary,
+    headerTitleStyle: {
+      fontWeight: '600',
+    },
+    headerTitleAlign: 'center',
+    headerBackTitleVisible: false,
+    headerLargeTitle: false,
+    headerTransparent: false,
+  };
+};
 
-const SCREEN_OPTIONS = {
+const SCREEN_CONFIG = {
   recipeList: {
     title: 'Your Recipes',
     headerLargeTitle: true,
@@ -70,27 +70,22 @@ export const AppNavigator = memo(() => {
   const [isReady, setIsReady] = useState(false);
   const [initialState, setInitialState] = useState<InitialState | undefined>();
 
-  const colors = useMemo(
-    () => (colorScheme === 'dark' ? COLORS.dark : COLORS.light),
-    [colorScheme],
-  );
+  const isDark = colorScheme === 'dark';
+  const colors = isDark ? COLORS.dark : COLORS.light;
 
-  const navigationTheme = useMemo<Theme>(
+  const navigationTheme = useMemo(
     () => ({
       ...DefaultTheme,
-      dark: colorScheme === 'dark',
+      dark: isDark,
       colors: {
         ...DefaultTheme.colors,
         ...colors,
       },
     }),
-    [colorScheme, colors],
+    [isDark, colors],
   );
 
-  const defaultScreenOptions = useMemo(
-    () => createScreenOptions(colors),
-    [colors],
-  );
+  const screenOptions = getScreenOptions(isDark);
 
   useEffect(() => {
     const restoreNavigationState = async () => {
@@ -124,7 +119,11 @@ export const AppNavigator = memo(() => {
 
   if (!isReady) {
     return (
-      <View style={styles.splashContainer}>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -137,16 +136,16 @@ export const AppNavigator = memo(() => {
       onStateChange={onStateChange}>
       <Stack.Navigator
         initialRouteName="RecipeList"
-        screenOptions={defaultScreenOptions}>
+        screenOptions={screenOptions}>
         <Stack.Screen
           name="RecipeList"
           component={RecipeListScreen}
-          options={SCREEN_OPTIONS.recipeList}
+          options={SCREEN_CONFIG.recipeList}
         />
         <Stack.Screen
           name="AddRecipe"
           component={AddRecipeScreen}
-          options={SCREEN_OPTIONS.addRecipe}
+          options={SCREEN_CONFIG.addRecipe}
         />
       </Stack.Navigator>
     </NavigationContainer>
@@ -154,11 +153,10 @@ export const AppNavigator = memo(() => {
 });
 
 const styles = StyleSheet.create({
-  splashContainer: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.light.background,
   },
 });
 

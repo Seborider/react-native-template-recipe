@@ -6,6 +6,7 @@ import Reanimated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { Button } from '../common/Button';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 interface AnimatedDeleteButtonProps {
   progress: SharedValue<number>;
@@ -14,6 +15,8 @@ interface AnimatedDeleteButtonProps {
 
 export const AnimatedDeleteButton = memo<AnimatedDeleteButtonProps>(
   ({ progress, onPress }) => {
+    const colors = useThemeColors();
+
     const animatedStyle = useAnimatedStyle(() => {
       const scale = interpolate(progress.value, [0, 0.6], [0, 1], 'clamp');
       const opacity = interpolate(
@@ -30,7 +33,15 @@ export const AnimatedDeleteButton = memo<AnimatedDeleteButtonProps>(
     });
 
     return (
-      <Reanimated.View style={[styles.deleteButton, animatedStyle]}>
+      <Reanimated.View
+        style={[
+          styles.deleteButton,
+          {
+            backgroundColor: colors.deleteButton,
+            shadowColor: colors.shadowColor,
+          },
+          animatedStyle,
+        ]}>
         <Button
           icon="🗑️"
           title="Delete"
@@ -50,13 +61,11 @@ AnimatedDeleteButton.displayName = 'AnimatedDeleteButton';
 
 const styles = StyleSheet.create({
   deleteButton: {
-    backgroundColor: '#FF3B30',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     width: 70,
     height: '100%',
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,

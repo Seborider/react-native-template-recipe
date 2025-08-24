@@ -7,6 +7,7 @@ import {
   TextStyle,
   GestureResponderEvent,
 } from 'react-native';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export type ButtonVariant =
   | 'primary'
@@ -51,10 +52,53 @@ export const Button = memo<ButtonProps>(
     accessibilityHint,
     accessibilityRole = 'button',
   }) => {
+    const colors = useThemeColors();
+
+    const getVariantStyles = () => {
+      switch (variant) {
+        case 'primary':
+        case 'icon':
+        case 'add':
+          return {
+            backgroundColor: colors.primaryButtonBackground,
+            color: colors.primaryButtonText,
+          };
+        case 'danger':
+        case 'delete':
+          return {
+            backgroundColor: colors.dangerButtonBackground,
+            color: colors.dangerButtonText,
+          };
+        case 'ghost':
+          return {
+            backgroundColor: colors.ghostButtonBackground,
+            color: colors.ghostButtonText,
+          };
+        case 'imageAdd':
+          return {
+            backgroundColor: colors.primaryButtonBackgroundLight,
+            color: colors.primary,
+            borderColor: colors.primary,
+          };
+        default:
+          return {
+            backgroundColor: colors.primaryButtonBackground,
+            color: colors.primaryButtonText,
+          };
+      }
+    };
+
+    const variantStyles = getVariantStyles();
+    const isVerticalLayout = variant === 'imageAdd' || variant === 'delete';
+    const textColor = disabled ? colors.disabledGray : variantStyles.color;
+
     const buttonStyles = [
       styles.button,
       styles[`${variant}Button`],
       styles[`${size}Button`],
+      { backgroundColor: variantStyles.backgroundColor },
+      variant === 'imageAdd' && { borderColor: variantStyles.borderColor },
+      variant === 'delete' && { shadowColor: colors.shadowColor },
       disabled && styles.disabledButton,
       style,
     ];
@@ -63,7 +107,7 @@ export const Button = memo<ButtonProps>(
       styles.text,
       styles[`${size}Text`],
       styles[`${variant}Text`],
-      disabled && styles.disabledText,
+      { color: textColor },
       textStyle,
     ];
 
@@ -71,11 +115,9 @@ export const Button = memo<ButtonProps>(
       styles.icon,
       styles[`${size}Icon`],
       (variant === 'imageAdd' || variant === 'delete') && styles.imageAddIcon,
-      disabled && styles.disabledText,
+      { color: textColor },
       textStyle,
     ];
-
-    const isVerticalLayout = variant === 'imageAdd' || variant === 'delete';
 
     return (
       <TouchableOpacity
@@ -116,29 +158,17 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
 
-  primaryButton: {
-    backgroundColor: '#007AFF',
-  },
-  primaryText: {
-    color: '#FFFFFF',
-  },
-
-  dangerButton: {
-    backgroundColor: '#FF3B30',
-  },
-  dangerText: {
-    color: '#FFFFFF',
-  },
+  primaryButton: {},
+  primaryText: {},
+  dangerButton: {},
+  dangerText: {},
+  ghostText: {},
 
   ghostButton: {
     backgroundColor: 'transparent',
   },
-  ghostText: {
-    color: '#007AFF',
-  },
 
   iconButton: {
-    backgroundColor: '#007AFF',
     borderRadius: 16,
     width: 32,
     height: 32,
@@ -146,53 +176,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   iconText: {
-    color: '#FFFFFF',
     fontSize: 20,
     lineHeight: 20,
   },
 
   addButton: {
-    backgroundColor: '#007AFF',
     borderRadius: 16,
   },
   addText: {
-    color: '#FFFFFF',
     fontSize: 20,
     fontWeight: '600',
     lineHeight: 20,
   },
 
   deleteButton: {
-    backgroundColor: '#FF3B30',
     borderRadius: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   deleteText: {
-    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
   },
 
   imageAddButton: {
     borderWidth: 2,
-    borderColor: '#007AFF',
     borderStyle: 'dashed',
-    backgroundColor: '#F8F9FF',
     width: 80,
     height: 80,
   },
   imageAddText: {
-    color: '#007AFF',
     fontSize: 12,
     fontWeight: '500',
   },
   imageAddIcon: {
     fontSize: 24,
-    color: '#007AFF',
     marginBottom: 2,
     marginRight: 0,
   },
@@ -235,9 +255,6 @@ const styles = StyleSheet.create({
 
   disabledButton: {
     opacity: 0.6,
-  },
-  disabledText: {
-    color: '#C7C7CC',
   },
 });
 

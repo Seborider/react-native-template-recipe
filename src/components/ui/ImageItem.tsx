@@ -7,6 +7,7 @@ import {
   getImageConfigForUri,
 } from '../../services/imageCache';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { IMAGE_SIZE } from '../../constants';
 
 interface ImageItemProps {
@@ -28,6 +29,7 @@ const ImageItem = memo<ImageItemProps>(
     showErrorFallback = false,
   }) => {
     const { triggerImpactLight } = useHapticFeedback();
+    const colors = useThemeColors();
     const [hasError, setHasError] = useState(false);
 
     const handleRemove = useCallback(() => {
@@ -51,7 +53,12 @@ const ImageItem = memo<ImageItemProps>(
     if (!imageSource) {
       if (showErrorFallback) {
         return (
-          <View style={[styles.imageWrapper, styles.imagePlaceholder]}>
+          <View
+            style={[
+              styles.imageWrapper,
+              styles.imagePlaceholder,
+              { backgroundColor: colors.mediumGray },
+            ]}>
             <Text style={styles.imagePlaceholderText}>📷</Text>
           </View>
         );
@@ -62,7 +69,12 @@ const ImageItem = memo<ImageItemProps>(
 
     if (hasError && showErrorFallback) {
       return (
-        <View style={[styles.imageWrapper, styles.imagePlaceholder]}>
+        <View
+          style={[
+            styles.imageWrapper,
+            styles.imagePlaceholder,
+            { backgroundColor: colors.mediumGray },
+          ]}>
           <Text style={styles.imagePlaceholderText}>📷</Text>
         </View>
       );
@@ -75,7 +87,7 @@ const ImageItem = memo<ImageItemProps>(
         accessibilityLabel={`Image ${index + 1} of ${totalImages}`}>
         <FastImage
           source={imageSource}
-          style={styles.image}
+          style={[styles.image, { backgroundColor: colors.lightGray }]}
           accessibilityRole="image"
           accessibilityLabel={`Recipe image ${index + 1} of ${totalImages}`}
           accessibilityIgnoresInvertColors={true}
@@ -88,8 +100,15 @@ const ImageItem = memo<ImageItemProps>(
             variant="danger"
             size="small"
             onPress={handleRemove}
-            style={styles.deleteButton}
-            textStyle={styles.deleteIconStyle}
+            style={{
+              ...styles.deleteButton,
+              backgroundColor: colors.deleteButton,
+              shadowColor: colors.shadowColor,
+            }}
+            textStyle={{
+              ...styles.deleteIconStyle,
+              color: colors.dangerButtonText,
+            }}
             hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
             accessibilityLabel={`Remove image ${index + 1}`}
             accessibilityHint="Tap to remove this image from the recipe"
@@ -110,12 +129,10 @@ const styles = StyleSheet.create({
     width: IMAGE_SIZE,
     height: IMAGE_SIZE,
     borderRadius: 8,
-    backgroundColor: '#F0F0F0',
   },
   imagePlaceholder: {
     width: IMAGE_SIZE,
     height: IMAGE_SIZE,
-    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
@@ -131,10 +148,8 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#FF3B30',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -146,7 +161,6 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   deleteIconStyle: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
     lineHeight: 16,
