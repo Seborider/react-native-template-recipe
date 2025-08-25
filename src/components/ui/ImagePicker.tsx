@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -52,13 +52,6 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
     [maxImages, images.length],
   );
 
-  // Preload images for better performance
-  useEffect(() => {
-    if (images.length > 0) {
-      ImageCacheManager.preloadImages(images);
-    }
-  }, [images]);
-
   const handleImagePickerResponse = useCallback(
     (response: ImagePickerResponse) => {
       if (response.didCancel || response.errorCode) {
@@ -80,7 +73,9 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
           .filter((uri): uri is string => uri !== undefined);
 
         if (newImages.length > 0) {
-          onImagesChange([...images, ...newImages]);
+          const updatedImages = [...images, ...newImages];
+          onImagesChange(updatedImages);
+          ImageCacheManager.preloadImages(newImages);
           triggerImpactMedium();
         }
       }
@@ -124,7 +119,9 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
       seed: `recipe-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
     });
 
-    onImagesChange([...images, randomImageUrl]);
+    const updatedImages = [...images, randomImageUrl];
+    onImagesChange(updatedImages);
+    ImageCacheManager.preloadImages([randomImageUrl]);
     triggerImpactMedium();
   }, [images, onImagesChange, triggerImpactLight, triggerImpactMedium]);
 

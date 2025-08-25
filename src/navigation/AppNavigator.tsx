@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import {
   NavigationContainer,
   DefaultTheme,
@@ -57,18 +57,43 @@ const SCREEN_CONFIG = {
       fontWeight: '700',
     },
   },
-  addRecipe: {
-    title: 'Add Recipe',
+  addRecipe: ({
+    route,
+  }: {
+    route: { params?: { recipe?: SerializableRecipe } };
+  }) => ({
+    title: route.params?.recipe ? 'Edit Recipe' : 'Add Recipe',
     presentation: 'modal' as const,
     gestureEnabled: true,
     gestureDirection: 'vertical' as const,
-  },
+  }),
 } as const;
 
 export const AppNavigator = memo(() => {
   const colorScheme = useColorScheme();
-  const [isReady, setIsReady] = useState(false);
-  const [initialState, setInitialState] = useState<InitialState | undefined>();
+
+  const [{ isReady, initialState }, setNavigationState] = useState(() => {
+    const restoreState = async () => {
+      try {
+        const savedStateString = await AsyncStorage.getItem(
+          NAVIGATION_STATE_KEY,
+        );
+        if (savedStateString) {
+          const state = JSON.parse(savedStateString);
+          setNavigationState({ isReady: true, initialState: state });
+        } else {
+          setNavigationState({ isReady: true, initialState: undefined });
+        }
+      } catch (error) {
+        console.warn('Failed to restore navigation state:', error);
+        setNavigationState({ isReady: true, initialState: undefined });
+      }
+    };
+
+    restoreState();
+
+    return { isReady: false, initialState: undefined };
+  });
 
   const isDark = colorScheme === 'dark';
   const colors = isDark ? COLORS.dark : COLORS.light;
@@ -86,28 +111,6 @@ export const AppNavigator = memo(() => {
   );
 
   const screenOptions = getScreenOptions(isDark);
-
-  useEffect(() => {
-    const restoreNavigationState = async () => {
-      try {
-        const savedStateString = await AsyncStorage.getItem(
-          NAVIGATION_STATE_KEY,
-        );
-        if (savedStateString) {
-          const state = JSON.parse(savedStateString);
-          setInitialState(state);
-        }
-      } catch (error) {
-        console.warn('Failed to restore navigation state:', error);
-      } finally {
-        setIsReady(true);
-      }
-    };
-
-    if (!isReady) {
-      restoreNavigationState();
-    }
-  }, [isReady]);
 
   const onStateChange = useCallback(async (state: InitialState | undefined) => {
     try {

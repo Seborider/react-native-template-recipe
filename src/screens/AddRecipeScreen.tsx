@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  memo,
+  useLayoutEffect,
+} from 'react';
 import {
   View,
   Text,
@@ -208,25 +214,18 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   }, [hasChanges, navigation, triggerImpactMedium]);
 
-  // Memoize header components to prevent recreation on each render
-  const headerLeft = useMemo(
-    () => <HeaderLeftButton onPress={handleCancel} />,
-    [handleCancel],
-  );
+  useLayoutEffect(() => {
+    const headerLeft = () => <HeaderLeftButton onPress={handleCancel} />;
+    const headerRight = () => (
+      <HeaderRightButton onPress={saveRecipe} saving={saving} />
+    );
 
-  const headerRight = useMemo(
-    () => <HeaderRightButton onPress={saveRecipe} saving={saving} />,
-    [saveRecipe, saving],
-  );
-
-  // Set up navigation header
-  useEffect(() => {
     navigation.setOptions({
       title: isEditing ? 'Edit Recipe' : 'Add Recipe',
-      headerLeft: () => headerLeft,
-      headerRight: () => headerRight,
+      headerLeft,
+      headerRight,
     });
-  }, [navigation, isEditing, headerLeft, headerRight]);
+  }, [navigation, isEditing, handleCancel, saveRecipe, saving]);
 
   const keyboardVerticalOffset =
     Platform.OS === 'ios'

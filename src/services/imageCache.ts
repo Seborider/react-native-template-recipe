@@ -1,7 +1,6 @@
 import FastImage, { Source } from 'react-native-fast-image';
 import { VALIDATION_CACHE_DURATION, IMAGE_LOAD_TIMEOUT } from '../constants';
 
-// Type definitions
 type ImagePriority =
   (typeof FastImage.priority)[keyof typeof FastImage.priority];
 type ImageCache =
@@ -15,7 +14,6 @@ interface ImageConfig {
   resizeMode: ImageResizeMode;
 }
 
-// Predefined configurations
 export const ImageConfigs: Record<string, ImageConfig> = {
   recipeImage: {
     priority: FastImage.priority.normal,
@@ -35,7 +33,6 @@ const validationCache = new Map<
   { isValid: boolean; timestamp: number }
 >();
 
-// Simple image preloading utility
 export const ImageCacheManager = {
   preloadImages: (imageUris: string[]): void => {
     if (imageUris.length === 0) {

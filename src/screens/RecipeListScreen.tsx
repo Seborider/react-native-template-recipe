@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useLayoutEffect } from 'react';
 import { View, StyleSheet, FlatList, Text, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -71,7 +71,7 @@ export const RecipeListScreen: React.FC<Props> = ({ navigation }) => {
     [navigateToAddRecipe],
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({ headerRight });
   }, [navigation, headerRight]);
 
