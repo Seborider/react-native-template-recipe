@@ -1,28 +1,14 @@
 import React, { useRef, useState, useCallback, memo, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  FlatList,
-  ListRenderItem,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import ReanimatedSwipeable, {
   SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SharedValue } from 'react-native-reanimated';
 import { Recipe } from '../../types/Recipe';
-import { ImageSeparator } from '../common/ImageSeparator';
-import { ImageItem } from './ImageItem';
+import { ImageList } from './ImageList';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import { useThemeColors } from '../../hooks/useThemeColors';
-import {
-  IMAGE_SIZE,
-  SWIPE_THRESHOLD,
-  SWIPE_FRICTION,
-  SNAP_INTERVAL,
-} from '../../constants';
+import { IMAGE_SIZE, SWIPE_THRESHOLD, SWIPE_FRICTION } from '../../constants';
 import { AnimatedDeleteButton } from './AnimatedDeleteButton';
 
 interface RecipeCardProps {
@@ -32,7 +18,7 @@ interface RecipeCardProps {
 }
 
 const EmptyImages = memo(() => {
-  const colors = useThemeColors();
+  const { colors } = useThemeColors();
 
   return (
     <View
@@ -80,7 +66,7 @@ export const RecipeCard = memo<RecipeCardProps>(
   ({ recipe, onPress, onDelete }) => {
     const swipeableRef = useRef<SwipeableMethods>(null);
     const [isScrolling, setIsScrolling] = useState(false);
-    const colors = useThemeColors();
+    const { colors } = useThemeColors();
     const { triggerImpactMedium, triggerNotificationWarning } =
       useHapticFeedback();
 
@@ -113,59 +99,14 @@ export const RecipeCard = memo<RecipeCardProps>(
       [handleDelete],
     );
 
-    const renderImage: ListRenderItem<string> = useCallback(
-      ({ item, index }) => (
-        <ImageItem
-          uri={item}
-          index={index}
-          totalImages={recipe.images.length}
-          showDeleteButton={false}
-          showErrorFallback={true}
-        />
-      ),
-      [recipe.images.length],
-    );
-
-    const keyExtractor = useCallback(
-      (_item: string, index: number) => `${recipe.id}-image-${index}`,
-      [recipe.id],
-    );
-
     const setScrollingTrue = useCallback(() => setIsScrolling(true), []);
     const setScrollingFalse = useCallback(() => setIsScrolling(false), []);
 
-    const flatListProps = useMemo(
-      () => ({
-        data: recipe.images,
-        renderItem: renderImage,
-        keyExtractor,
-        horizontal: true,
-        showsHorizontalScrollIndicator: false,
-        ItemSeparatorComponent: ImageSeparator,
-        contentContainerStyle: styles.imagesList,
-        decelerationRate: 'fast' as const,
-        snapToInterval: SNAP_INTERVAL,
-        snapToAlignment: 'start' as const,
-        onScrollBeginDrag: setScrollingTrue,
-        onScrollEndDrag: setScrollingFalse,
-        onMomentumScrollEnd: setScrollingFalse,
-        removeClippedSubviews: true,
-        maxToRenderPerBatch: 5,
-        windowSize: 10,
-        initialNumToRender: 3,
-        accessibilityRole: 'list' as const,
-        accessibilityLabel: `${recipe.images.length} recipe ${
-          recipe.images.length === 1 ? 'image' : 'images'
-        }`,
-      }),
-      [
-        recipe.images,
-        renderImage,
-        keyExtractor,
-        setScrollingTrue,
-        setScrollingFalse,
-      ],
-    );
+    const accessibilityLabel = useMemo(() => {
+      return `${recipe.images.length} recipe ${
+        recipe.images.length === 1 ? 'image' : 'images'
+      }`;
+    }, [recipe.images.length]);
 
     return (
       <ReanimatedSwipeable
@@ -210,7 +151,17 @@ export const RecipeCard = memo<RecipeCardProps>(
 
             <View style={styles.imagesSection}>
               {recipe.images.length > 0 ? (
-                <FlatList {...flatListProps} />
+                <ImageList
+                  images={recipe.images}
+                  showDeleteButton={false}
+                  showErrorFallback={true}
+                  snapToInterval={true}
+                  accessibilityLabel={accessibilityLabel}
+                  keyPrefix={recipe.id}
+                  onScrollBeginDrag={setScrollingTrue}
+                  onScrollEndDrag={setScrollingFalse}
+                  onMomentumScrollEnd={setScrollingFalse}
+                />
               ) : (
                 <EmptyImages />
               )}
@@ -256,9 +207,6 @@ const styles = StyleSheet.create({
   },
   imagesSection: {
     minHeight: IMAGE_SIZE,
-  },
-  imagesList: {
-    paddingVertical: 4,
   },
   emptyImagesContainer: {
     height: IMAGE_SIZE,

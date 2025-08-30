@@ -18,9 +18,6 @@ export const MAX_DESCRIPTION_LENGTH = 1000;
 /** Maximum number of images allowed per recipe */
 export const MAX_IMAGES = 8;
 
-/** Default maximum images for image picker component */
-export const DEFAULT_MAX_IMAGES = 10;
-
 /** Default image quality for picked images (0.0 - 1.0) */
 export const DEFAULT_IMAGE_QUALITY = 0.8;
 

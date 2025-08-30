@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, memo, useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { Button } from '../common/Button';
 import {
@@ -17,6 +17,7 @@ interface ImageItemProps {
   onRemove?: (index: number) => void;
   showDeleteButton?: boolean;
   showErrorFallback?: boolean;
+  onPress?: () => void;
 }
 
 const ImageItem = memo<ImageItemProps>(
@@ -27,9 +28,10 @@ const ImageItem = memo<ImageItemProps>(
     onRemove,
     showDeleteButton = true,
     showErrorFallback = false,
+    onPress,
   }) => {
     const { triggerImpactLight } = useHapticFeedback();
-    const colors = useThemeColors();
+    const { colors } = useThemeColors();
     const [hasError, setHasError] = useState(false);
 
     const handleRemove = useCallback(() => {
@@ -81,10 +83,11 @@ const ImageItem = memo<ImageItemProps>(
     }
 
     return (
-      <View
+      <TouchableOpacity
         style={styles.imageWrapper}
         accessibilityRole="button"
-        accessibilityLabel={`Image ${index + 1} of ${totalImages}`}>
+        accessibilityLabel={`Image ${index + 1} of ${totalImages}`}
+        onPress={onPress}>
         <FastImage
           source={imageSource}
           style={[styles.image, { backgroundColor: colors.lightGray }]}
@@ -114,7 +117,7 @@ const ImageItem = memo<ImageItemProps>(
             accessibilityHint="Tap to remove this image from the recipe"
           />
         )}
-      </View>
+      </TouchableOpacity>
     );
   },
 );

@@ -1,12 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Alert,
-  Platform,
-  ListRenderItem,
-} from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import {
   launchImageLibrary,
   MediaType,
@@ -16,14 +9,12 @@ import {
 } from 'react-native-image-picker';
 import { ImageCacheManager } from '../../services/imageCache';
 import { PicsumUtils } from '../../utils/picsumUtils';
-import { ImageItem } from './ImageItem';
+import { ImageList } from './ImageList';
 import { AddImageButtons } from './AddImageButtons';
-import { ImageSeparator } from '../common/ImageSeparator';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import {
   IMAGE_SIZE,
-  IMAGE_SPACING,
-  DEFAULT_MAX_IMAGES,
+  MAX_IMAGES,
   DEFAULT_IMAGE_QUALITY,
   MAX_SELECTION_LIMIT,
 } from '../../constants';
@@ -36,12 +27,10 @@ interface ImagePickerProps {
   imageQuality?: PhotoQuality;
 }
 
-const ItemSeparator = () => <ImageSeparator spacing={IMAGE_SPACING} />;
-
 export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
   images,
   onImagesChange,
-  maxImages = DEFAULT_MAX_IMAGES,
+  maxImages = MAX_IMAGES,
   imageSize = IMAGE_SIZE,
   imageQuality = DEFAULT_IMAGE_QUALITY,
 }) => {
@@ -125,34 +114,6 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
     triggerImpactMedium();
   }, [images, onImagesChange, triggerImpactLight, triggerImpactMedium]);
 
-  // Optimized render functions
-  const renderImage = useCallback<ListRenderItem<string>>(
-    ({ item, index }) => (
-      <ImageItem
-        uri={item}
-        index={index}
-        totalImages={images.length}
-        onRemove={removeImage}
-      />
-    ),
-    [images.length, removeImage],
-  );
-
-  const keyExtractor = useCallback(
-    (item: string, index: number) => `image-${index}-${item}`,
-    [],
-  );
-
-  // Calculate getItemLayout for performance
-  const getItemLayout = useCallback(
-    (_data: ArrayLike<string> | null | undefined, index: number) => ({
-      length: imageSize,
-      offset: (imageSize + IMAGE_SPACING) * index,
-      index,
-    }),
-    [imageSize],
-  );
-
   const ListHeaderComponent = useMemo(
     () =>
       images.length > 0 ? (
@@ -186,23 +147,17 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={images}
-        renderItem={renderImage}
-        keyExtractor={keyExtractor}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        ItemSeparatorComponent={ItemSeparator}
+      <ImageList
+        images={images}
+        onRemoveImage={removeImage}
+        showDeleteButton={true}
+        showErrorFallback={false}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
-        contentContainerStyle={styles.flatListContent}
-        getItemLayout={getItemLayout}
-        removeClippedSubviews={Platform.OS === 'android'}
-        maxToRenderPerBatch={5}
-        windowSize={10}
-        initialNumToRender={5}
-        accessibilityRole="list"
+        imageSize={imageSize}
         accessibilityLabel={accessibilityLabel}
+        keyPrefix="image-picker"
+        snapToInterval={true}
       />
     </View>
   );
@@ -211,9 +166,6 @@ export const ImagePickerComponent: React.FC<ImagePickerProps> = ({
 const styles = StyleSheet.create({
   container: {
     minHeight: IMAGE_SIZE + 20,
-  },
-  flatListContent: {
-    paddingVertical: 8,
   },
 });
 

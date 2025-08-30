@@ -50,8 +50,8 @@ describe('ImagePickerComponent', () => {
     expect(screen.getByLabelText('Add image from gallery')).toBeTruthy();
   });
 
-  it('uses default maxImages of 10', () => {
-    const images = Array(9).fill('https://example.com/image.jpg');
+  it('uses default maxImages of 8', () => {
+    const images = Array(7).fill('https://example.com/image.jpg');
 
     render(
       <ImagePickerComponent
@@ -62,7 +62,7 @@ describe('ImagePickerComponent', () => {
 
     expect(screen.getByText('Gallery')).toBeTruthy();
     expect(
-      screen.getByLabelText('Image picker with 9 of 10 images selected'),
+      screen.getByLabelText('Image picker with 7 of 8 images selected'),
     ).toBeTruthy();
   });
 });
