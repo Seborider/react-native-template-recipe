@@ -61,6 +61,10 @@ export const ImageList: React.FC<ImageListProps> = ({
     setModalVisible(false);
   }, []);
 
+  const handleIndexChange = useCallback((newIndex: number) => {
+    setSelectedImageIndex(newIndex);
+  }, []);
+
   const renderImage = useCallback<ListRenderItem<string>>(
     ({ item, index }) => (
       <ImageItem
@@ -153,10 +157,10 @@ export const ImageList: React.FC<ImageListProps> = ({
       {modalVisible && (
         <ImageModal
           visible={modalVisible}
-          uri={images[selectedImageIndex]}
+          images={images}
           index={selectedImageIndex}
-          totalImages={images.length}
           onClose={handleCloseModal}
+          onIndexChange={handleIndexChange}
         />
       )}
     </View>

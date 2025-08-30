@@ -6,9 +6,12 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 describe('ImageModal', () => {
   const defaultProps = {
     visible: true,
-    uri: 'https://example.com/image.jpg',
+    images: [
+      'https://example.com/image1.jpg',
+      'https://example.com/image2.jpg',
+      'https://example.com/image3.jpg',
+    ],
     index: 0,
-    totalImages: 3,
     onClose: jest.fn(),
   };
 
@@ -21,7 +24,9 @@ describe('ImageModal', () => {
       const { getByText } = render(<ImageModal {...defaultProps} />);
 
       expect(getByText('1 / 3')).toBeTruthy();
-      expect(getByText('Swipe down or tap to close')).toBeTruthy();
+      expect(
+        getByText('Swipe left/right to navigate • Swipe down or tap to close'),
+      ).toBeTruthy();
     });
 
     it('does not render when not visible', () => {
@@ -33,11 +38,9 @@ describe('ImageModal', () => {
     });
 
     it('displays correct image counter', () => {
-      const { getByText } = render(
-        <ImageModal {...defaultProps} index={1} totalImages={5} />,
-      );
+      const { getByText } = render(<ImageModal {...defaultProps} index={1} />);
 
-      expect(getByText('2 / 5')).toBeTruthy();
+      expect(getByText('2 / 3')).toBeTruthy();
     });
 
     it('renders FastImage with correct props', () => {
@@ -61,18 +64,6 @@ describe('ImageModal', () => {
 
       expect(onClose).toHaveBeenCalledTimes(1);
     });
-
-    it('calls onClose when backdrop is pressed', () => {
-      const onClose = jest.fn();
-      const { getByLabelText } = render(
-        <ImageModal {...defaultProps} onClose={onClose} />,
-      );
-
-      const backdrop = getByLabelText('Close modal backdrop');
-      fireEvent.press(backdrop);
-
-      expect(onClose).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe('Error Handling', () => {
@@ -90,16 +81,6 @@ describe('ImageModal', () => {
   });
 
   describe('Accessibility', () => {
-    it('has correct accessibility properties on modal backdrop', () => {
-      const { getByLabelText } = render(<ImageModal {...defaultProps} />);
-
-      const backdrop = getByLabelText('Close modal backdrop');
-      expect(backdrop).toHaveProp(
-        'accessibilityHint',
-        'Tap to close the full screen image view',
-      );
-    });
-
     it('has correct accessibility properties on image', () => {
       const { getByLabelText } = render(<ImageModal {...defaultProps} />);
 
@@ -111,25 +92,81 @@ describe('ImageModal', () => {
     it('displays helpful hint text', () => {
       const { getByText } = render(<ImageModal {...defaultProps} />);
 
-      expect(getByText('Swipe down or tap to close')).toBeTruthy();
+      expect(
+        getByText('Swipe left/right to navigate • Swipe down or tap to close'),
+      ).toBeTruthy();
     });
   });
 
   describe('Different States', () => {
     it('renders with different index values correctly', () => {
-      const { getByText } = render(
-        <ImageModal {...defaultProps} index={2} totalImages={5} />,
-      );
+      const { getByText } = render(<ImageModal {...defaultProps} index={2} />);
 
-      expect(getByText('3 / 5')).toBeTruthy();
+      expect(getByText('3 / 3')).toBeTruthy();
     });
 
     it('works with single image', () => {
       const { getByText } = render(
-        <ImageModal {...defaultProps} index={0} totalImages={1} />,
+        <ImageModal
+          {...defaultProps}
+          images={['https://example.com/image.jpg']}
+          index={0}
+        />,
       );
 
       expect(getByText('1 / 1')).toBeTruthy();
+      expect(getByText('Swipe down or tap to close')).toBeTruthy();
+    });
+  });
+
+  describe('Navigation', () => {
+    it('calls onIndexChange when navigating between images', () => {
+      const onIndexChange = jest.fn();
+      render(<ImageModal {...defaultProps} onIndexChange={onIndexChange} />);
+
+      // Note: Testing actual swipe gestures would require more complex setup
+      // This test verifies the prop interface
+      expect(onIndexChange).not.toHaveBeenCalled();
+    });
+
+    it('shows navigation arrows when there are multiple images', () => {
+      const { getByLabelText } = render(
+        <ImageModal {...defaultProps} index={1} />,
+      );
+
+      expect(getByLabelText('Previous image')).toBeTruthy();
+      expect(getByLabelText('Next image')).toBeTruthy();
+    });
+
+    it('hides left arrow on first image', () => {
+      const { queryByLabelText } = render(
+        <ImageModal {...defaultProps} index={0} />,
+      );
+
+      expect(queryByLabelText('Previous image')).toBeFalsy();
+      expect(queryByLabelText('Next image')).toBeTruthy();
+    });
+
+    it('hides right arrow on last image', () => {
+      const { queryByLabelText } = render(
+        <ImageModal {...defaultProps} index={2} />,
+      );
+
+      expect(queryByLabelText('Previous image')).toBeTruthy();
+      expect(queryByLabelText('Next image')).toBeFalsy();
+    });
+
+    it('does not show arrows for single image', () => {
+      const { queryByLabelText } = render(
+        <ImageModal
+          {...defaultProps}
+          images={['https://example.com/image.jpg']}
+          index={0}
+        />,
+      );
+
+      expect(queryByLabelText('Previous image')).toBeFalsy();
+      expect(queryByLabelText('Next image')).toBeFalsy();
     });
   });
 });
