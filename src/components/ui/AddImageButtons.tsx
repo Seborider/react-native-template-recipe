@@ -13,7 +13,7 @@ export interface AddImageButtonsProps {
 
 export const AddImageButtons = memo<AddImageButtonsProps>(
   ({ onAddFromGallery, onAddRandom, remainingSlots, hasImages }) => {
-    const colors = useThemeColors();
+    const { colors } = useThemeColors();
 
     return (
       <View

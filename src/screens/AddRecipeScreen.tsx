@@ -101,7 +101,7 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
     triggerNotificationError,
   } = useHapticFeedback();
 
-  const colors = useThemeColors();
+  const { colors } = useThemeColors();
 
   const existingRecipe: Recipe | undefined = useMemo(() => {
     const serializableRecipe = route.params?.recipe;
@@ -294,7 +294,7 @@ export const AddRecipeScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
-const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
+const createStyles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
   StyleSheet.create({
     container: {
       flex: 1,

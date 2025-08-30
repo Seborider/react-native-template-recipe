@@ -52,7 +52,7 @@ export const Button = memo<ButtonProps>(
     accessibilityHint,
     accessibilityRole = 'button',
   }) => {
-    const colors = useThemeColors();
+    const { colors } = useThemeColors();
 
     const getVariantStyles = () => {
       switch (variant) {

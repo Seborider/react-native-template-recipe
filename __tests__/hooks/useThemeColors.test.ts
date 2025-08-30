@@ -28,22 +28,38 @@ describe('useThemeColors logic', () => {
   it('theme selection logic works correctly', () => {
     // Simulate the hook's logic without React Native dependency
     const selectTheme = (colorScheme: string | null | undefined) => {
-      return colorScheme === 'dark' ? COLORS.dark : COLORS.light;
+      const isDark = colorScheme === 'dark';
+      const colors = isDark ? COLORS.dark : COLORS.light;
+      return { colors, isDark };
     };
 
-    expect(selectTheme('light')).toEqual(COLORS.light);
-    expect(selectTheme('dark')).toEqual(COLORS.dark);
-    expect(selectTheme(null)).toEqual(COLORS.light);
-    expect(selectTheme(undefined)).toEqual(COLORS.light);
+    expect(selectTheme('light')).toEqual({
+      colors: COLORS.light,
+      isDark: false,
+    });
+    expect(selectTheme('dark')).toEqual({ colors: COLORS.dark, isDark: true });
+    expect(selectTheme(null)).toEqual({ colors: COLORS.light, isDark: false });
+    expect(selectTheme(undefined)).toEqual({
+      colors: COLORS.light,
+      isDark: false,
+    });
   });
 
   it('hook logic handles edge cases', () => {
     const selectTheme = (colorScheme: string | null | undefined) => {
-      return colorScheme === 'dark' ? COLORS.dark : COLORS.light;
+      const isDark = colorScheme === 'dark';
+      const colors = isDark ? COLORS.dark : COLORS.light;
+      return { colors, isDark };
     };
 
-    expect(selectTheme('')).toEqual(COLORS.light);
-    expect(selectTheme('light')).toEqual(COLORS.light);
-    expect(selectTheme('some-unknown-scheme')).toEqual(COLORS.light);
+    expect(selectTheme('')).toEqual({ colors: COLORS.light, isDark: false });
+    expect(selectTheme('light')).toEqual({
+      colors: COLORS.light,
+      isDark: false,
+    });
+    expect(selectTheme('some-unknown-scheme')).toEqual({
+      colors: COLORS.light,
+      isDark: false,
+    });
   });
 });

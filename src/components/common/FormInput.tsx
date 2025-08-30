@@ -39,7 +39,7 @@ export const FormInput = memo<FormInputProps>(
     showRequiredFieldsHint = false,
     ...textInputProps
   }) => {
-    const colors = useThemeColors();
+    const { colors } = useThemeColors();
 
     const labelId = `${label.toLowerCase().replace(/\s+/g, '-')}-label`;
     const displayLabel = required ? `${label} *` : label;

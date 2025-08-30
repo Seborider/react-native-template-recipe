@@ -23,7 +23,6 @@ const withMutex = <T>(fn: () => Promise<T>): Promise<T> => {
   return result;
 };
 
-// Date parsing helper
 const parseDate = (value: unknown): Date => {
   if (value instanceof Date) {
     return value;
@@ -65,17 +64,14 @@ const writeToStorage = async (recipes: Recipe[]): Promise<void> => {
 
   await AsyncStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(serialized));
 
-  // Update cache
   cache = { data: recipes, timestamp: Date.now() };
 };
 
 export const getRecipes = async (): Promise<Recipe[]> => {
-  // Check cache validity
   if (cache.data && Date.now() - cache.timestamp < CACHE_TIMEOUT) {
     return cache.data;
   }
 
-  // Read with mutex protection
   return withMutex(async () => {
     const recipes = await readFromStorage();
     cache = { data: recipes, timestamp: Date.now() };
@@ -147,7 +143,6 @@ export const deleteRecipe = async (recipeId: string): Promise<void> => {
   });
 };
 
-// Utility to invalidate cache (useful for testing)
 export const invalidateCache = () => {
   cache = { data: null, timestamp: 0 };
 };

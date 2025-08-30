@@ -3,5 +3,8 @@ import { COLORS } from '../constants/colors';
 
 export const useThemeColors = () => {
   const colorScheme = useColorScheme();
-  return colorScheme === 'dark' ? COLORS.dark : COLORS.light;
+  const isDark = colorScheme === 'dark';
+  const colors = isDark ? COLORS.dark : COLORS.light;
+
+  return { colors, isDark };
 };

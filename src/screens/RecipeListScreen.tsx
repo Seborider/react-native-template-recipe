@@ -22,7 +22,7 @@ interface Props {
   navigation: RecipeListScreenNavigationProp;
 }
 
-export const RecipeListScreen: React.FC<Props> = ({ navigation }) => {
+export const RecipeListScreen = ({ navigation }: Props) => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const {
@@ -32,7 +32,7 @@ export const RecipeListScreen: React.FC<Props> = ({ navigation }) => {
     triggerNotificationError,
   } = useHapticFeedback();
 
-  const colors = useThemeColors();
+  const { colors } = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const loadRecipes = async () => {
@@ -177,7 +177,7 @@ export const RecipeListScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
+const createStyles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
   StyleSheet.create({
     container: {
       flex: 1,

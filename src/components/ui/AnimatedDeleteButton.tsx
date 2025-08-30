@@ -15,7 +15,7 @@ interface AnimatedDeleteButtonProps {
 
 export const AnimatedDeleteButton = memo<AnimatedDeleteButtonProps>(
   ({ progress, onPress }) => {
-    const colors = useThemeColors();
+    const { colors } = useThemeColors();
 
     const animatedStyle = useAnimatedStyle(() => {
       const scale = interpolate(progress.value, [0, 0.6], [0, 1], 'clamp');

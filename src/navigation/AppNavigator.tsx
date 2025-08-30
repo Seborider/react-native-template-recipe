@@ -8,16 +8,12 @@ import {
   createNativeStackNavigator,
   NativeStackNavigationOptions,
 } from '@react-navigation/native-stack';
-import {
-  useColorScheme,
-  View,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Recipe } from '../types/Recipe';
 import { RecipeListScreen } from '../screens/RecipeListScreen';
 import { AddRecipeScreen } from '../screens/AddRecipeScreen';
+import { useThemeColors } from '../hooks/useThemeColors';
 import { NAVIGATION_STATE_KEY, COLORS } from '../constants';
 
 export type SerializableRecipe = Omit<Recipe, 'createdAt' | 'updatedAt'> & {
@@ -70,7 +66,7 @@ const SCREEN_CONFIG = {
 } as const;
 
 export const AppNavigator = memo(() => {
-  const colorScheme = useColorScheme();
+  const { colors, isDark } = useThemeColors();
 
   const [{ isReady, initialState }, setNavigationState] = useState(() => {
     const restoreState = async () => {
@@ -94,9 +90,6 @@ export const AppNavigator = memo(() => {
 
     return { isReady: false, initialState: undefined };
   });
-
-  const isDark = colorScheme === 'dark';
-  const colors = isDark ? COLORS.dark : COLORS.light;
 
   const navigationTheme = useMemo(
     () => ({
